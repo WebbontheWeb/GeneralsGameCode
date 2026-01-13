@@ -129,6 +129,7 @@ CreditsManager::CreditsManager(void)
 	m_currentStyle = CREDIT_STYLE_NORMAL;
 	m_isFinished = FALSE;
 	m_normalFontHeight = 10;
+	m_subPixelAccumulator = 0.0f;
 }
 
 CreditsManager::~CreditsManager(void)
@@ -175,6 +176,7 @@ void CreditsManager::reset( void )
 	m_isFinished = FALSE;
 	m_creditLineListIt = m_creditLineList.begin();
 	m_framesSinceStarted = 0;
+	m_subPixelAccumulator = 0.0f;
 
 }
 
@@ -188,6 +190,17 @@ void CreditsManager::update( void )
 		return;
 
 
+	// TheSuperHackers @bugfix webbontheweb 12/01/2026 Fix scroll speed dependency on resolution.
+	Real factor = (Real)TheDisplay->getHeight() / 600.0f; // Assuming 600px is base screen height
+	Real currentFPS = TheDisplay->getCurrentFPS();
+	if (currentFPS < 1.0f)
+		currentFPS = 60.0f;
+	Real fpsAdjustment = 60.0f / currentFPS;
+
+	m_subPixelAccumulator += (Real)m_scrollRate * factor * fpsAdjustment;
+	Int pixelsToScroll = (Int)m_subPixelAccumulator;
+	m_subPixelAccumulator -= (Real)pixelsToScroll;
+
 	Int y = 0;
 	Int yTest = 0;
 	Int lastHeight = 0;
@@ -200,7 +213,7 @@ void CreditsManager::update( void )
 	while (drawIt != m_displayedCreditLineList.end())
 	{
 		CreditsLine *cLine = *drawIt;
-		y = cLine->m_pos.y = cLine->m_pos.y + (m_scrollRate * directionMultiplyer);
+		y = cLine->m_pos.y = cLine->m_pos.y + (pixelsToScroll * directionMultiplyer);
 		lastHeight = cLine->m_height;
 		yTest = y + ((lastHeight + CREDIT_SPACE_OFFSET) * offsetEndMultiplyer);
 		if(((m_scrollDown && (yTest > end)) || (!m_scrollDown && (yTest < end))))

@@ -151,6 +151,7 @@ private:
 
 	Int m_framesSinceStarted;
 	Int m_normalFontHeight;
+	float m_subPixelAccumulator;
 };
 
 
